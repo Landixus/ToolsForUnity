@@ -5,6 +5,7 @@ using Photon.Pun;
 using ExitGames.Client.Photon;
 using Photon.Realtime;
 using Photon.Pun.UtilityScripts;
+
 //using Photon.Realtime;
 
 public class KnockoutModeManager : MonoBehaviourPunCallbacks //MonoBehaviour 
@@ -112,36 +113,71 @@ public class KnockoutModeManager : MonoBehaviourPunCallbacks //MonoBehaviour
     }
 
     private GameObject go;
-    private GameObject go2;
+   // private GameObject go2;
 
     public void AddRiders()
     {
 
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        GameObject[] tag;
+      //  GameObject[] tag_2;
+
+
+        tag = GameObject.FindGameObjectsWithTag("Player");
+        Debug.Log("Found TAG_1");
+      //  tag_2 = GameObject.FindGameObjectsWithTag("OtherPlayer");
+      //  Debug.Log("Found TAG_2");
+
+
+        for (int i = 0; i < tag.Length; i++)
 
         {
-            GameObject[] tag;
-            GameObject[] tag_2;
-
-
-            tag = GameObject.FindGameObjectsWithTag("Player");
-            tag_2 = GameObject.FindGameObjectsWithTag("OtherPlayer");
-
-
-            //    for (int i = 0; i < tag.Length; i++)
-
-            {
-                players.Add(tag[i].GetComponent<PlayerTicket>());
-                Debug.Log("found TAG");
-            }
-
-            for (int k = 0; k < tag_2.Length; k++)
-
-            {
-                players.Add(tag_2[k].GetComponent<PlayerTicket>());
-                Debug.Log("found TAG_2");
-            }
+            players.Add(tag[i].GetComponent<PlayerTicket>());
+            Debug.LogFormat("Found {0} objects with TAG_1", tag.Length);
         }
+
+       // for (int i = 0; i < tag_2.Length; i++)
+
+       // {
+       //     players.Add(tag_2[i].GetComponent<PlayerTicket>());
+       //     Debug.Log("Add TAG_2");
+       // }
+
     }
+
+    //private GameObject go;
+    private GameObject go2;
+
+    public void AddOthers()
+    {
+
+       // GameObject[] tag;
+          GameObject[] tag_2;
+
+
+        //tag = GameObject.FindGameObjectsWithTag("Player");
+        //Debug.Log("Found TAG_1");
+          tag_2 = GameObject.FindGameObjectsWithTag("OtherPlayer");
+          Debug.LogFormat("Found {0} objects with TAG_2", tag_2.Length);
+      //  Debug.Log("Found TAG_2");
+
+
+        for (int i = 0; i < tag_2.Length; i++)
+
+        {
+            players.Add(tag_2[i].GetComponent<PlayerTicket>());
+            Debug.LogFormat("Found {0} objects with TAG_2", tag_2.Length);
+        }
+
+        // for (int i = 0; i < tag_2.Length; i++)
+
+        // {
+        //     players.Add(tag_2[i].GetComponent<PlayerTicket>());
+        //     Debug.Log("Add TAG_2");
+        // }
+
+    }
+
+
+
 }
     
