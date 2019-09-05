@@ -30,7 +30,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     [SerializeField]
     private InputField messagesLog;
 
-    private GameObject player;
+    private GameObject player;  //private
     private GameObject rooGO;
 
     public GameObject SPPlayer;
@@ -52,6 +52,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     public GameObject knockOutUI;
     public GameObject knockOutManager;
     public GameObject knockOutButton;
+    public KnockoutModeManager knockManagerList;
 
 
         /// <summary>
@@ -200,7 +201,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     /// The coroutine function to spawn player.
     /// </summary>
     /// <param name="spawnTime">Time waited before spawn a player.</param> 
-    
+    private PlayerTicket test;
     IEnumerator RespawnCoroutine(float spawnTime)
     {
         yield return new WaitForSeconds(spawnTime);
@@ -223,8 +224,8 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
         //        serverWindow.SetActive(true);
          //       knockOutButton.SetActive(true);
          //   }
-          //  knockOutManager.GetComponent<KnockoutModeManager>().AddRiders();
-          //  Debug.Log("Knockout Adder1");
+        //    knockOutManager.GetComponent<KnockoutModeManager>().AddRiders();
+        //    Debug.Log("Knockout Adder12");
         }
         else
         {
@@ -232,11 +233,20 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
             Destroy(SPPlayer);
             pairScreen.SetActive(true);
             RPS_Position posScript = (RPS_Position)player.GetComponent<RPS_Position>() as RPS_Position;
-            Debug.Log("RPS Adder");
+            Debug.Log("RPS AdderMM");
             yield return new WaitForSeconds(2.0f);
-            knockOutManager.GetComponent<KnockoutModeManager>().AddRiders();
-            Debug.Log("Knockout Adder2");
 
+            test = player.GetComponent<PlayerTicket>();
+            knockManagerList.players.Add(test);
+            Debug.Log("test");
+
+
+
+            /*   knockOutManager.GetComponent<KnockoutModeManager>().AddRiders();
+               Debug.Log("Knockout Adder");
+               knockOutManager.GetComponent<KnockoutModeManager>().AddOthers();
+               Debug.Log("Knockout Other");
+           */
             // add the position to the storageScript
             if (!storageScript.positionScript.Contains(posScript))
             {
@@ -342,7 +352,10 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
 
     }
     
-
+    public void CloseKnockOutUI()
+    {
+        knockOutUI.SetActive(!knockOutUI.activeSelf);
+    }
     
 
 
