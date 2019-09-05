@@ -106,12 +106,15 @@ public class KnockoutModeManager : MonoBehaviourPunCallbacks //MonoBehaviour
         }
 
         //Reset tickets for all players
-      //  for (int i = 0; i < players.Length; i++)
+     //   for (int i = 0; i < players.Length; i++)
      //   {
        //     players[i].GetComponent<PlayerTicket>().ticket = false;
       //  }
     }
 
+    
+
+/*
     private GameObject go;
    // private GameObject go2;
 
@@ -177,7 +180,7 @@ public class KnockoutModeManager : MonoBehaviourPunCallbacks //MonoBehaviour
 
     }
 
-
+*/
 
 }
     
