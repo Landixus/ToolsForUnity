@@ -49,11 +49,13 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     public GameObject TimeAttackPanel;
     public GameObject TimeAttackCountdown;
 
-    public GameObject knockOutUI;
+   // CountdownVeloDrome countdownVeloDrome;
+
+    /*public GameObject knockOutUI;
     public GameObject knockOutManager;
     public GameObject knockOutButton;
     public KnockoutModeManager knockManagerList;
-
+    */
 
         /// <summary>
     /// Start is called on the frame when a script is enabled just before
@@ -71,12 +73,12 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
         messagesLog = GameObject.Find("DemoUI/MessagePanel/MessageLog").GetComponent<InputField>();
         pairScreen = GameObject.Find("DemoUI/Pairing");
         SPPlayer = GameObject.Find("Bicycle");
-        knockOutUI = GameObject.Find("DemoUI/KnockOutModeUI");
-        knockOutButton = GameObject.Find("DemoUI/NetworkPanel/KnockOutModeButton");
+      //  knockOutUI = GameObject.Find("DemoUI/KnockOutModeUI");
+      //  knockOutButton = GameObject.Find("DemoUI/NetworkPanel/KnockOutModeButton");
         //RPS
         /*RPS_Storage*/ storageScript = GameObject.Find("RPS_Storage").GetComponent<RPS_Storage>();
       //  knockOutUI.SetActive (false);
-        knockOutButton.SetActive(false);
+      //  knockOutButton.SetActive(false);
         TimeAttackCountdown = GameObject.Find("CountDownManager");
 
 
@@ -102,7 +104,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     void Update()
     {
         //New from John
-        knockOutManager.GetComponent<KnockoutModeManager>().playerCount = PhotonNetwork.CountOfPlayers;
+    //    knockOutManager.GetComponent<KnockoutModeManager>().playerCount = PhotonNetwork.CountOfPlayers;
     }
 
     /// <summary>
@@ -236,9 +238,9 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
             Debug.Log("RPS AdderMM");
             yield return new WaitForSeconds(2.0f);
 
-            test = player.GetComponent<PlayerTicket>();
-            knockManagerList.players.Add(test);
-            Debug.Log("test");
+          //  test = player.GetComponent<PlayerTicket>();
+          //  knockManagerList.players.Add(test);
+          //  Debug.Log("test");
 
 
 
@@ -255,7 +257,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
             if (PhotonNetwork.IsMasterClient)
             {
                 serverWindow.SetActive(true);
-                knockOutButton.SetActive(true);
+             //   knockOutButton.SetActive(true);
             }
 
         }
@@ -336,10 +338,10 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
         raceGameManager.SetActive (true);
         TimeAttackPanel.SetActive(true);
         TimeAttackCountdown.GetComponent<CountdownVeloDrome>().enabled = true;
-
         serverWindow.SetActive(!serverWindow.activeSelf);
     }
 
+    /*
     public void StartKnockOutMode()
     {
        // knockOutManager.GetComponent<KnockoutModeManager>().enabled = true;
@@ -351,12 +353,13 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
         };
 
     }
-    
+    */
+    /*
     public void CloseKnockOutUI()
     {
         knockOutUI.SetActive(!knockOutUI.activeSelf);
     }
-    
+    */
 
 
 
