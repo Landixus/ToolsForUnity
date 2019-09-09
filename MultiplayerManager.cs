@@ -103,7 +103,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
-        //New from John
+        
     //    knockOutManager.GetComponent<KnockoutModeManager>().playerCount = PhotonNetwork.CountOfPlayers;
     }
 
