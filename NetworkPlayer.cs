@@ -26,8 +26,8 @@ public class NetworkPlayer : MonoBehaviourPunCallbacks  //,IPunObservable
     void Start()
     {
 
-
-      //  RPS_Storage storageScript = GameObject.Find("RPS_Storage").GetComponent<RPS_Storage>();
+      
+        //  RPS_Storage storageScript = GameObject.Find("RPS_Storage").GetComponent<RPS_Storage>();
         storageScript = GameObject.Find("RPS_Storage").GetComponent<RPS_Storage>();
         knockOutManager = GameObject.Find("KnockOutManager");
         knockManagerList = GameObject.Find("KnockOutManager").GetComponent<KnockoutModeManager>();
@@ -68,7 +68,8 @@ public class NetworkPlayer : MonoBehaviourPunCallbacks  //,IPunObservable
                 smoothSync.validateStateMethod = validateStateOfPlayer;
             }
 
-           // otherplayer = GameObject.FindGameObjectWithTag("OtherPlayer");
+            // otherplayer = GameObject.FindGameObjectWithTag("OtherPlayer");
+                          
             wait();
             Debug.Log("Ok Wait 2 seconds!");
 
@@ -76,11 +77,22 @@ public class NetworkPlayer : MonoBehaviourPunCallbacks  //,IPunObservable
             RPS_Position posScript = (RPS_Position)otherplayer.GetComponent<RPS_Position>() as RPS_Position;
             Debug.Log("RPS Adder2");
 
+            //Add the other Players to the List for Knockout
             test = GameObject.FindGameObjectWithTag("OtherPlayer").GetComponent<PlayerTicket>();
             knockManagerList.players.Add(test);
+          //  knockManagerList.AddPlayerCount();
+          //  Debug.Log("AddPlayerCount +1");
+
+            /*   wait();
+               for (int i = 0; i < knockManagerList.players.Count; i++)
+               {
+                   if (knockManagerList.players[i] != null)
+                       knockManagerList.playerCount += 1;
+               }
+               */
             //remove duplicates
-           // knockManagerList.players = knockManagerList.players.Distinct().ToList();
-            Debug.Log("testOtherPlayer");
+            // knockManagerList.players = knockManagerList.players.Distinct().ToList();
+            Debug.Log("testOtherPlayerForKnockOutMode");
 
             //  knockOutManager.GetComponent<KnockoutModeManager>().AddOthers();
             //  Debug.Log("AddOtherNetWorkScript");
