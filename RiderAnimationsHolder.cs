@@ -87,15 +87,18 @@ public class RiderAnimationsHolder : bl_PhotonHelper
         speed = centralSensor.speed;
 
         
-        if (centralSensor.cadence >= 10 && centralSensor.speed >= 1)
+      if (centralSensor.cadence >= 10 && centralSensor.speed >= 1)
         {
-            isAnimating = true;
-            if (isAnimating == true)
+            if (!isAnimating)
             {
+                isAnimating = true;
                 bikeAnimator.SetTrigger("Start Pedaling");
                 riderAnimator.SetTrigger("Start Pedaling");
-                isAnimating = false;
             }
+        }
+        else
+        {
+            isAnimating = false;
         }
 
         
