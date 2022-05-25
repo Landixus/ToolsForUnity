@@ -135,28 +135,29 @@ public class CentralSensor : MonoBehaviour
                 speed = FECspeed;
                 Debug.Log("we Have FEC Speed");
             }
-            else if (powermeterDisplay.connected == true)
-            {
-                PMValues();
-            }
-
-            if (!PM_Online)
-            {
-                PM_Online = true;
-                power = PMPower;
-                cadence = PMCadence;
-                Debug.Log("Speed is virtual");
-            }
-            else
-            {
-                FEC_Online = false;
-                PM_Online = false;
-            }
+            
+        }
+        else if (powermeterDisplay.connected == true)
+        {
+            PMValues();
         }
 
-     
+        if (!PM_Online)
+        {
+            PM_Online = true;
+            power = PMPower;
+            cadence = PMCadence;
+            Debug.Log("Speed is virtual");
+        }
+        else
+        {
+            FEC_Online = false;
+            PM_Online = false;
+        }
 
-}
+
+
+    }
 
 /*
 
