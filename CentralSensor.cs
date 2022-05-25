@@ -79,41 +79,41 @@ public class CentralSensor : MonoBehaviour
 
     public void Update()
     {
-        if (powermeterDisplay == null)
-        {
-            powermeterDisplay = GameObject.Find("PowerMeterDisplay").GetComponent<PowerMeterDisplay>();
-        }
+        /* if (powermeterDisplay == null)
+         {
+             powermeterDisplay = GameObject.Find("PowerMeterDisplay").GetComponent<PowerMeterDisplay>();
+         }
 
-        if (heartRateDisplay == null)
-        {
-            heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
-        }
+         if (heartRateDisplay == null)
+         {
+             heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
+         }
 
-        if (fitnessEquipmentDisplay == null)
-        {
-            fitnessEquipmentDisplay = GameObject.Find("FitnessEquipmentDisplay").GetComponent<FitnessEquipmentDisplay>();
+         if (fitnessEquipmentDisplay == null)
+         {
+             fitnessEquipmentDisplay = GameObject.Find("FitnessEquipmentDisplay").GetComponent<FitnessEquipmentDisplay>();
 
-        }
+         }
 
-        if (cadenceDisplay == null)
-        {
-            cadenceDisplay = GameObject.Find("CadenceDisplay").GetComponent<CadenceDisplay>();
-        }
+         if (cadenceDisplay == null)
+         {
+             cadenceDisplay = GameObject.Find("CadenceDisplay").GetComponent<CadenceDisplay>();
+         }
 
-        if (speedCadenceDisplay == null)
-        {
-            speedCadenceDisplay = GameObject.Find("SpeedCadenceDisplay").GetComponent<SpeedCadenceDisplay>();
-        }
+         if (speedCadenceDisplay == null)
+         {
+             speedCadenceDisplay = GameObject.Find("SpeedCadenceDisplay").GetComponent<SpeedCadenceDisplay>();
+         }
 
-        if (heartRateDisplay == null)
-        {
-            heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
-        }
-        if (pureSpeedDisplay == null)
-        {
-            pureSpeedDisplay = GameObject.Find("SpeedDisplay").GetComponent<SpeedDisplay>();
-        }
-
+         if (heartRateDisplay == null)
+         {
+             heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
+         }
+         if (pureSpeedDisplay == null)
+         {
+             pureSpeedDisplay = GameObject.Find("SpeedDisplay").GetComponent<SpeedDisplay>();
+         }
+         */
         if (bl_PlayerMovement == null)
         {
             bl_PlayerMovement = GameObject.FindGameObjectWithTag("Player").GetComponent<bl_PlayerMovement>();
@@ -121,30 +121,18 @@ public class CentralSensor : MonoBehaviour
 
 
 
-        if (fitnessEquipmentDisplay.connected == true)
-        { 
+        if (fitnessEquipmentDisplay && fitnessEquipmentDisplay.connected == true)
+        {
             GetFecValues();
-            if (!FEC_Online)
-            {
-                FEC_Online = true;
-
-                SpeedOfDevice = true;
-                SpeedVirtual = false;
-                cadence = FECcadence;
-                power = FECinstPower;
-                speed = FECspeed;
-                Debug.Log("we Have FEC Speed");
-            }
-            
+            SpeedOfDevice = true;
+            SpeedVirtual = false;
+            Debug.Log("we Have FEC Speed");
         }
-        else if (powermeterDisplay.connected == true)
+        else if (powermeterDisplay && powermeterDisplay.connected == true)
         {
             PMValues();
-        }
-
-        if (!PM_Online)
-        {
-            PM_Online = true;
+            SpeedOfDevice = false;
+            SpeedVirtual = true;
             power = PMPower;
             cadence = PMCadence;
             Debug.Log("Speed is virtual");
@@ -154,10 +142,8 @@ public class CentralSensor : MonoBehaviour
             FEC_Online = false;
             PM_Online = false;
         }
-
-
-
     }
+
 
 /*
 
@@ -198,25 +184,16 @@ public class CentralSensor : MonoBehaviour
 
     public void GetFecValues()
     {
-        FECspeed = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().speed;
-        FECcadence = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().cadence;
-        FECinstPower = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().instantaneousPower;
-        
+        speed = fitnessEquipmentDisplay.speed;
+        cadence = fitnessEquipmentDisplay.cadence;
+        power = fitnessEquipmentDisplay.instantaneousPower;
+       
     }
 
     public void PMValues()
     {
-        PMPower = powermeterDisplay.GetComponent<PowerMeterDisplay>().instantaneousPower;
-        PMCadence = powermeterDisplay.GetComponent<PowerMeterDisplay>().instantaneousCadence;
-        if (PMPower >= 0 && fitnessEquipmentDisplay.instantaneousPower <= 0 && fitnessEquipmentDisplay.speed <= 0)
-        {
-            SpeedVirtual = true;
-            Debug.Log("Speed is virtual");
-        }
-        else
-        {
-            SpeedVirtual = false;
-        }
+        power = powermeterDisplay.instantaneousPower;
+        cadence = powermeterDisplay.instantaneousCadence;
     }
 
     public void GetCadValues()
