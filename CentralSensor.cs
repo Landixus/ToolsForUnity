@@ -53,8 +53,10 @@ public class CentralSensor : MonoBehaviour
     public float slopeGrade = 0.5f;
     public float brakeForce = 0.1f;
     public float powerVirtualCalc;
-
     public float fakeCadence = 80;
+
+    public bool FEC_Online = false;
+    public bool PM_Online = false;
 
 
     private void Start()
@@ -119,25 +121,48 @@ public class CentralSensor : MonoBehaviour
 
         if (fitnessEquipmentDisplay.connected == true)
         {
-            GetFecValues();
-            
-            if (FECspeed > 0)
+            if (!FEC_Online)
             {
-                SpeedOfDevice = true;
-                SpeedVirtual = false;
-                speed = FECspeed;
+                FEC_Online = true;
+                GetFecValues();
+
+                if (FECspeed >= 0)
+                {
+                    SpeedOfDevice = true;
+                    SpeedVirtual = false;
+                    FECspeed = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().speed;
+                    FECcadence = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().cadence;
+                    FECinstPower = fitnessEquipmentDisplay.GetComponent<FitnessEquipmentDisplay>().instantaneousPower;
+                    speed = FECspeed;
+                    Debug.Log("we Have FEC Speed");
+                }
+               // cadence = FECcadence;
+               // power = FECinstPower;
             }
-            cadence = FECcadence;
-            power = FECinstPower;
+        }
+        else
+        {
+            FEC_Online = false;
         }
         
         if (powermeterDisplay.connected == true)
         {
-            PMValues();
-            power = PMPower;
-            cadence = PMCadence;
+            if (!PM_Online && !FEC_Online)
+            {
+                PM_Online = true;
+                PMValues();
+                power = PMPower;
+                cadence = PMCadence;
+                Debug.Log("Speed is virtual");
+            }
+            
 
         }
+        else
+        {
+            PM_Online = false;
+        }
+
         if(cadenceDisplay.connected == true)
         {
             GetCadValues();
@@ -185,9 +210,10 @@ public class CentralSensor : MonoBehaviour
     {
         PMPower = powermeterDisplay.GetComponent<PowerMeterDisplay>().instantaneousPower;
         PMCadence = powermeterDisplay.GetComponent<PowerMeterDisplay>().instantaneousCadence;
-        if (PMPower > 1 && fitnessEquipmentDisplay.instantaneousPower <= 0 && fitnessEquipmentDisplay.speed <= 0)
+        if (PMPower >= 0 && fitnessEquipmentDisplay.instantaneousPower <= 0 && fitnessEquipmentDisplay.speed <= 0)
         {
             SpeedVirtual = true;
+            Debug.Log("Speed is virtual");
         }
     }
 
