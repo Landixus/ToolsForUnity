@@ -13,31 +13,13 @@ public class CentralSensor : MonoBehaviour
     public SpeedCadenceDisplay speedCadenceDisplay;
     public SpeedDisplay pureSpeedDisplay;
     public bl_PlayerMovement bl_PlayerMovement;
-    //public FakePowerCadenceHr fakePowerCadenceHR;
-
-    public float FECspeed;
-    public float FECcadence;
-    public float FECinstPower;
-
-    public float PMPower;
-    public float PMCadence;
-
-    public float SPDSpeed;
-    public float SPDCadence;
-
-    public float CadCadence;
-
+   
     public bool SpeedVirtual;
     public bool SpeedOfDevice;
 
     public float speed;
-    public float VSpeed;
-    public float RSpeed;
-
     public float cadence;
-
     public float power;
-
     public float heartrate;
 
     //Calculation for only Power needed!
@@ -57,6 +39,10 @@ public class CentralSensor : MonoBehaviour
 
     public bool FEC_Online = false;
     public bool PM_Online = false;
+    public bool CAD_Online = false;
+    public bool SPEED_Online = false;
+  //  public bool SPEED_CAD_Online = false;
+    public bool HR_Online = false; 
 
 
     private void Start()
@@ -79,48 +65,14 @@ public class CentralSensor : MonoBehaviour
 
     public void Update()
     {
-        /* if (powermeterDisplay == null)
-         {
-             powermeterDisplay = GameObject.Find("PowerMeterDisplay").GetComponent<PowerMeterDisplay>();
-         }
-
-         if (heartRateDisplay == null)
-         {
-             heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
-         }
-
-         if (fitnessEquipmentDisplay == null)
-         {
-             fitnessEquipmentDisplay = GameObject.Find("FitnessEquipmentDisplay").GetComponent<FitnessEquipmentDisplay>();
-
-         }
-
-         if (cadenceDisplay == null)
-         {
-             cadenceDisplay = GameObject.Find("CadenceDisplay").GetComponent<CadenceDisplay>();
-         }
-
-         if (speedCadenceDisplay == null)
-         {
-             speedCadenceDisplay = GameObject.Find("SpeedCadenceDisplay").GetComponent<SpeedCadenceDisplay>();
-         }
-
-         if (heartRateDisplay == null)
-         {
-             heartRateDisplay = GameObject.Find("HeartRateDisplay").GetComponent<HeartRateDisplay>();
-         }
-         if (pureSpeedDisplay == null)
-         {
-             pureSpeedDisplay = GameObject.Find("SpeedDisplay").GetComponent<SpeedDisplay>();
-         }
-         */
-        if (bl_PlayerMovement == null)
+        //always check the slopeGrade to reduce or raise virtual speed
+        if (bl_PlayerMovement)
         {
-            bl_PlayerMovement = GameObject.FindGameObjectWithTag("Player").GetComponent<bl_PlayerMovement>();
+        slopeGrade = bl_PlayerMovement.slopeGrade;
         }
+        heartrate = heartRateDisplay.heartRate;
 
-
-
+        //Check the devices and get the values
         if (fitnessEquipmentDisplay && fitnessEquipmentDisplay.connected == true)
         {
             GetFecValues();
@@ -133,155 +85,101 @@ public class CentralSensor : MonoBehaviour
             PMValues();
             SpeedOfDevice = false;
             SpeedVirtual = true;
-            power = PMPower;
-            cadence = PMCadence;
             Debug.Log("Speed is virtual");
+            //CalcSpeed from Power
+            Fgravity = speed * 9.8067f * 1.01f * Mathf.Sin(Mathf.Atan(slopeGrade / 100f)) * weight;
+            FrollingResitance = speed * 9.8067f * 1f * Mathf.Cos(Mathf.Atan(slopeGrade / 100f)) * weight * coefficientOfRollingResistance;
+            FaeroDrag = speed * 0.3f * dragCoef * frontalArea * airDensity * (speed * speed);
+            brakeForce = (Fgravity + FrollingResitance + FaeroDrag) / 100;
+            //    Debug.Log("BrakeForce" + brakeForce);
+            powerVirtualCalc = power - brakeForce;
+            speed = powerVirtualCalc / 4.9f;
+        }
+        else if (cadenceDisplay && cadenceDisplay.connected == true)
+        {
+            GetCadValues();
+            Debug.Log("cadence only)");
+        }
+        else if (pureSpeedDisplay && pureSpeedDisplay.connected == true)
+        {
+            SPEED_Online = true;
+            GetSpeedValues();
+            Debug.Log("GoToPureSpeed");
+        }
+        //combined speed cadenceDisplay are Rare, enable first if we have user feedback that it is needed
+        /*else if (speedCadenceDisplay && speedCadenceDisplay.connected == true)
+        {
+            GetSpeedCadValues();
+        }*/
+        //Check if we have a chestStrap active
+        else if (heartRateDisplay && heartRateDisplay.connected == true)
+        {
+            if (!SPEED_Online)
+            {
+                fakeSpeedwithHr();
+                Debug.Log("GoToFakeSpeed");
+            }
+            
         }
         else
         {
             FEC_Online = false;
             PM_Online = false;
+            CAD_Online = false;
+            SPEED_Online = false;
+            HR_Online = false;
         }
+
     }
-
-
-/*
-
-        if(cadenceDisplay.connected == true)
-        {
-            GetCadValues();
-            cadence = CadCadence;
-        }
-        if (speedCadenceDisplay.connected == true)
-        {
-            GetSpeedCadValues();
-            speed = SPDSpeed;
-            cadence = SPDCadence;
-            SpeedOfDevice = true;  // needs a break for Elevation
-            SpeedVirtual = false;
-        }
-        if (pureSpeedDisplay.connected == true)
-        {
-            speed = pureSpeedDisplay.GetComponent<SpeedDisplay>().speed; // needs a break for Elevation
-
-        }
-
-        if (SpeedVirtual == true)
-        {
-            CalcForSpeedWithPower();
-         
-        }
-
-        heartrate = heartRateDisplay.heartRate;
-        slopeGrade = bl_PlayerMovement.slopeGrade;
-        if (heartRateDisplay.connected == true && fitnessEquipmentDisplay.connected == false && powermeterDisplay.connected == false && speedCadenceDisplay.connected == false && cadenceDisplay.connected == false)
-        {
-            fakeSpeedwithHr();
-            cadence = fakeCadence;
-        }
-
-    }*/
-
+    //Get Values of the FEC Device
     public void GetFecValues()
     {
         speed = fitnessEquipmentDisplay.speed;
         cadence = fitnessEquipmentDisplay.cadence;
         power = fitnessEquipmentDisplay.instantaneousPower;
-       
-    }
 
+    }
+    //Get Values of the PowerMeter
     public void PMValues()
     {
         power = powermeterDisplay.instantaneousPower;
         cadence = powermeterDisplay.instantaneousCadence;
     }
-
+    //Get values of cadence sensor and calculate speed only "if (!SPEED_Online)"
     public void GetCadValues()
     {
-        CadCadence = cadenceDisplay.GetComponent<CadenceDisplay>().cadence;
+        cadence = cadenceDisplay.cadence;
+        if (!SPEED_Online)
+        {
+        speed = cadence * heartRateDisplay.heartRate / 35.5599976f / 10;
+        Debug.Log("WithRealCadence");
+        }
+        else
+        {
+            GetSpeedValues();
+        }
+  
+    }
+    public void GetSpeedValues()
+    {
+        speed = pureSpeedDisplay.speed;
+        cadence = cadenceDisplay.cadence;
+        Debug.Log("PureSpeed");
     }
 
+    /*
     public void GetSpeedCadValues()
     {
-        SPDSpeed = speedCadenceDisplay.GetComponent<SpeedCadenceDisplay>().speed;
-        SPDCadence = speedCadenceDisplay.GetComponent<SpeedCadenceDisplay>().cadence;
+        speed = speedCadenceDisplay.speed;
+        cadence = speedCadenceDisplay.cadence;
     }
-
-    public void CalcForSpeedWithPower()
-    {
-        if ( SpeedVirtual == true)
-        {
-            
-            
-            Fgravity = speed * 9.8067f * 1.01f * Mathf.Sin(Mathf.Atan(slopeGrade / 100f)) * weight;
-            FrollingResitance = speed * 9.8067f * 1f * Mathf.Cos(Mathf.Atan(slopeGrade / 100f)) * weight * coefficientOfRollingResistance;
-            FaeroDrag = speed * 0.3f * dragCoef * frontalArea * airDensity * (speed * speed);
-            brakeForce = (Fgravity + FrollingResitance + FaeroDrag) /100;
-        //    Debug.Log("BrakeForce" + brakeForce);
-            powerVirtualCalc = power - brakeForce;
-            speed = powerVirtualCalc / 4.9f;
-                       
-        }
-            
-    }
-
+    */
     public void fakeSpeedwithHr()
-    {
-           //fake with HR
-            speed = fakeCadence * heartRateDisplay.heartRate / 35.5599976f /10;
-            Debug.Log("we us fakedSpeed" + speed);
+    {       
+            cadence = fakeCadence;
+            speed = fakeCadence * heartRateDisplay.heartRate / 35.5599976f / 10;
+            Debug.Log("With Fake Cadence");
     }
    
 
 }
-
-
-
-
-
-    /*public int GetPower()
-    {
-        if (powermeterDisplay.connected)
-        {
-            return powermeterDisplay.instantaneousPower;
-        }
-        if (fitnessEquipmentDisplay.connected)
-        {
-            return fitnessEquipmentDisplay.instantaneousPower;
-        }
-        if (cadenceDisplay.connected)
-        {
-            return (int)fakePowerCadenceHR.fakePower;
-        }
-        return 0;
-    }
-
-    
-    public int GetCadence()
-    {
-        if (powermeterDisplay.connected)
-        {
-            return powermeterDisplay.instantaneousCadence;
-        }
-        if (fitnessEquipmentDisplay.connected)
-        {
-            return fitnessEquipmentDisplay.cadence;
-        }
-        if (cadenceDisplay.connected)
-        {
-            return cadenceDisplay.cadence;
-        }
-        return 0;
-    }
-
-   
-    public float GetHeartRate()
-    {
-        if (heartRateDisplay.connected)
-        {
-            return heartRateDisplay.heartRate;
-        }
-        return 0f;
-    }*/
-
-
