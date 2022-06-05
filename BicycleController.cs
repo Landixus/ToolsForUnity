@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Dreamteck.Splines;
 
 // Please use using SBPScripts; directive to refer to or append the SBP library
 namespace SBPScripts
@@ -15,11 +16,9 @@ namespace SBPScripts
     [System.Serializable]
     public class PedalAdjustments
     {
-
         public float crankRadius;
         public Vector3 lPedalOffset, rPedalOffset;
-        public float pedalingSpeed;  // check if we can get it from central Sensor
-      
+        public float pedalingSpeed;
     }
     // Wheel Friction Settings Class - Uses Physics Materials and Physics functions to control the 
     // static / dynamic slipping of the wheels 
@@ -142,7 +141,15 @@ namespace SBPScripts
         public float bunnyHopStrength;
         public WayPointSystem wayPointSystem;
         public AirTimeSettings airTimeSettings;
-        public FitnessEquipmentDisplay fitnessEquipmentDisplay;
+
+        public float mass = 50;
+        //Dreamteck Splines
+        //public SplineFollower follower;
+        public SplineProjector follower;
+        public SplineComputer splineComputer;
+        public CentralSensor centralSensor;
+        public float currentSpeed;
+       
 
         void Awake()
         {
@@ -151,12 +158,19 @@ namespace SBPScripts
 
         void Start()
         {
-            if (fitnessEquipmentDisplay)
-            {
-                pedalAdjustments.pedalingSpeed = fitnessEquipmentDisplay.cadence / 10;
-            }
-
+            splineComputer = GameObject.FindGameObjectWithTag("SplinePath").GetComponent<SplineComputer>(); // The Path we move on
+            centralSensor = GameObject.FindGameObjectWithTag("CentralSensor").GetComponent<CentralSensor>(); //the Central Sensor holds cadence, power....
+            follower = GetComponent<SplineProjector>(); //We are the follower of Path
+            follower.spline = splineComputer;          //The Computer holds the PathData
+          //  follower.motion.applyPositionY = false;   // DreamTeck Have no control over the Y Position
+          //  follower.motion.applyRotationY = true;    // We want that the Rotation is to the Path
+          //  follower.motion.applyRotationX = false;   // DreamTeck Have no control over the X Rotation
+          //  follower.motion.applyRotationZ = false;   // DreamTeck Have no control over the Z Rotation
+           
             rb = GetComponent<Rigidbody>();
+            rb.mass = 50;
+            Debug.Log("Mass of Bike " + rb.mass);  //mayBe we can read the mass out of user setting and add to it, need to see what the physics say to it.
+
             rb.maxAngularVelocity = Mathf.Infinity;
 
             fWheelRb = fPhysicsWheel.GetComponent<Rigidbody>();
@@ -182,16 +196,24 @@ namespace SBPScripts
                 wayPointSystem.sprintInstructionSet.Clear();
                 wayPointSystem.bHopInstructionSet.Clear();
             }
-            fitnessEquipmentDisplay = GameObject.FindGameObjectWithTag("fec").GetComponent<FitnessEquipmentDisplay>();
         }
-        
 
         void FixedUpdate()
         {
+            // we transfer speed with the values of trainer devices of the central sensor 
+            //The devices send Km/h so we need to convert to unity = m/s so we do a divide /3.6f 
+            //if we want mph we can 1 Km/h = 0,62 mp/h
+            //the central sensor speed / 3.6f (In UI Display we can convert to mp/h)
+            // For that we need a Km/h and a Mp/h display if we want this.
+
             //get the cadence out of the sensor for pedaling speed
-            if (fitnessEquipmentDisplay)
+            if (centralSensor)
             {
-                pedalAdjustments.pedalingSpeed = fitnessEquipmentDisplay.cadence / 10;
+                pedalAdjustments.pedalingSpeed = centralSensor.cadence / 10;
+            }
+            else
+            {
+                pedalAdjustments.pedalingSpeed = 8;
             }
 
             //Physics based Steering Control.
@@ -201,8 +223,8 @@ namespace SBPScripts
             //Power Control. Wheel Torque + Acceleration curves
 
             //cache rb velocity
-            float currentSpeed = rb.velocity.magnitude;  //fitnessEquipmentDisplay.speed;  //
-
+            float currentSpeed = rb.velocity.magnitude;
+            
             if (!sprint)
                 currentTopSpeed = Mathf.Lerp(currentTopSpeed, topSpeed * relaxedSpeed, Time.deltaTime);
             else
@@ -212,7 +234,9 @@ namespace SBPScripts
                 rWheelRb.AddTorque(transform.right * torque * customAccelerationAxis);
 
             if (currentSpeed < currentTopSpeed && rawCustomAccelerationAxis > 0 && !isAirborne && !isBunnyHopping)
-                rb.AddForce(transform.forward * accelerationCurve.Evaluate(customAccelerationAxis));
+                //rb.AddForce(transform.forward * accelerationCurve.Evaluate(customAccelerationAxis));
+                rb.AddForce(transform.forward * centralSensor.power);
+               
 
             if (currentSpeed < reversingSpeed && rawCustomAccelerationAxis < 0 && !isAirborne && !isBunnyHopping)
                 rb.AddForce(-transform.forward * accelerationCurve.Evaluate(customAccelerationAxis) * 0.5f);
@@ -397,14 +421,17 @@ namespace SBPScripts
 
         }
 
+        //changed for not need to press a button for accerlation
         void ApplyCustomInput()
         {
             if (wayPointSystem.recordingState == WayPointSystem.RecordingState.DoNothing || wayPointSystem.recordingState == WayPointSystem.RecordingState.Record)
             {
                 CustomInput("Horizontal", ref customSteerAxis, 5, 5, false);
-                CustomInput("Vertical", ref customAccelerationAxis, 1, 1, false);
+                //CustomInput("Vertical", ref customAccelerationAxis, 1, 1, false);
+                CustomInput(1f, ref customAccelerationAxis, 1, 1, false); //1f simulates the button is always 1
                 CustomInput("Horizontal", ref customLeanAxis, 1, 1, false);
-                CustomInput("Vertical", ref rawCustomAccelerationAxis, 1, 1, true);
+                // CustomInput("Vertical", ref rawCustomAccelerationAxis, 1, 1, true);
+                CustomInput(1f, ref rawCustomAccelerationAxis, 1, 1, true); //1f simulates the button is always 1
 
                 sprint = Input.GetKey(KeyCode.LeftShift);
 
@@ -449,10 +476,15 @@ namespace SBPScripts
             }
         }
 
-        //Input Manager Controls
+        //Input Manager Controls  to have always a Value of 1f for vertical accerlation
         float CustomInput(string name, ref float axis, float sensitivity, float gravity, bool isRaw)
         {
             var r = Input.GetAxisRaw(name);
+            return CustomInput(r, ref axis, sensitivity, gravity, isRaw);
+        }
+
+        float CustomInput(float r, ref float axis, float sensitivity, float gravity, bool isRaw)
+        {
             var s = sensitivity;
             var g = gravity;
             var t = Time.unscaledDeltaTime;
@@ -469,6 +501,26 @@ namespace SBPScripts
 
             return axis;
         }
+
+        /* float CustomInput(string name, ref float axis, float sensitivity, float gravity, bool isRaw)
+         {
+             var r = Input.GetAxisRaw(name);
+             var s = sensitivity;
+             var g = gravity;
+             var t = Time.unscaledDeltaTime;
+
+             if (isRaw)
+                 axis = r;
+             else
+             {
+                 if (r != 0)
+                     axis = Mathf.Clamp(axis + r * s * t, -1f, 1f);
+                 else
+                     axis = Mathf.Clamp01(Mathf.Abs(axis) - g * t) * Mathf.Sign(axis);
+             }
+
+             return axis;
+         }*/
 
         float WayPointInput(float instruction, ref float axis, float sensitivity, float gravity, bool isRaw)
         {
@@ -499,3 +551,4 @@ namespace SBPScripts
 
     }
 }
+
