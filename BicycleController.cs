@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Dreamteck.Splines;
 
 // Please use using SBPScripts; directive to refer to or append the SBP library
@@ -143,13 +145,25 @@ namespace SBPScripts
         public AirTimeSettings airTimeSettings;
 
         public float mass = 50;
+        public float bikeMass = 6.9f;
         //Dreamteck Splines
-        //public SplineFollower follower;
         public SplineProjector follower;
         public SplineComputer splineComputer;
+        //BikeValues
         public CentralSensor centralSensor;
+        private VirtualTrainer virtualTrainer;
         public float currentSpeed;
+        public FitnessEquipmentDisplay fitnessEquipmentDisplay;
        
+        //for checking the slope only 0,5 seconds
+        public float slope;
+        private float nextActionTime = 0.2f;
+        public float period = 0.2f;
+        public float minValue = -20f;  //dont go under 20 we clamp the values between
+        public float maxValue = 20f;   //dont go over 20
+
+        public Vector3 currentPosition;
+
 
         void Awake()
         {
@@ -161,14 +175,20 @@ namespace SBPScripts
             splineComputer = GameObject.FindGameObjectWithTag("SplinePath").GetComponent<SplineComputer>(); // The Path we move on
             centralSensor = GameObject.FindGameObjectWithTag("CentralSensor").GetComponent<CentralSensor>(); //the Central Sensor holds cadence, power....
             follower = GetComponent<SplineProjector>(); //We are the follower of Path
+            follower.targetObject = GameObject.FindGameObjectWithTag("Player");
+            fitnessEquipmentDisplay=  GameObject.Find("FitnessEquipmentDisplay").GetComponent<FitnessEquipmentDisplay>();
             follower.spline = splineComputer;          //The Computer holds the PathData
-          //  follower.motion.applyPositionY = false;   // DreamTeck Have no control over the Y Position
-          //  follower.motion.applyRotationY = true;    // We want that the Rotation is to the Path
-          //  follower.motion.applyRotationX = false;   // DreamTeck Have no control over the X Rotation
-          //  follower.motion.applyRotationZ = false;   // DreamTeck Have no control over the Z Rotation
-           
+            follower.motion.velocityHandleMode = TransformModule.VelocityHandleMode.Align;
+            follower.motion.applyPositionY = false;   // DreamTeck Have no control over the Y Position
+            follower.motion.applyPositionX = false;   // DreamTeck Have no control over the X Position
+            follower.motion.applyPositionZ = false;   // DreamTeck Have no control over the Z Position
+            follower.updateMethod = SplineUser.UpdateMethod.FixedUpdate; // Should solve the glitches
+                                                      //  follower.motion.applyRotationY = true;    // We want that the Rotation is to the Path
+                                                      //  follower.motion.applyRotationX = false;   // DreamTeck Have no control over the X Rotation
+                                                      //  follower.motion.applyRotationZ = false;   // DreamTeck Have no control over the Z Rotation
+
             rb = GetComponent<Rigidbody>();
-            rb.mass = 50;
+            rb.mass = PlayerPrefs.GetFloat("BikerWeight") + 6.9f;  //
             Debug.Log("Mass of Bike " + rb.mass);  //mayBe we can read the mass out of user setting and add to it, need to see what the physics say to it.
 
             rb.maxAngularVelocity = Mathf.Infinity;
@@ -196,6 +216,11 @@ namespace SBPScripts
                 wayPointSystem.sprintInstructionSet.Clear();
                 wayPointSystem.bHopInstructionSet.Clear();
             }
+
+            virtualTrainer = new VirtualTrainer();
+            float userWeight = PlayerPrefs.GetFloat("BikerWeight");   //80f; The BikerWeight is save in PlayerPrefs Try in Unity Menu "Window"AdvancedPlayerPrefs
+            float bikeMass = 6.9f;
+            virtualTrainer.SetUserSettings(userWeight, bikeMass);
         }
 
         void FixedUpdate()
@@ -206,15 +231,41 @@ namespace SBPScripts
             //the central sensor speed / 3.6f (In UI Display we can convert to mp/h)
             // For that we need a Km/h and a Mp/h display if we want this.
 
+            //for checking the slope only 0,2 seconds
+            if (Time.time > nextActionTime)
+            {
+                nextActionTime += period;
+                float slope = CheckSlopeGrade();
+                float terrainFriction = 0.002f;
+                float vehicleFrontalArea = 0.40f;
+                float vehicleDragCoeff = 0.89f;
+                float temperature = 20.0f + 273.15f;
+                float groundElevation = 0.0f;
+                float airPressure = (float)(101325.0f * Math.Pow(2.71f, (-(9.8f * 0.02896f * groundElevation) / (8.31447f * 288.15f))));
+                float airDensity = airPressure / (287.05f * temperature);
+                float windResCoeff = vehicleFrontalArea * vehicleDragCoeff * airDensity;
+                float realWindSpeed_kmh = 0.0f;
+                float draftingCoeff = 1.0f;
+                virtualTrainer.SetTerrainResistance(slope, terrainFriction);
+                virtualTrainer.SetWindResistance(windResCoeff * 0.5f, (sbyte)realWindSpeed_kmh, draftingCoeff);
+                virtualTrainer.SetCadence((byte)centralSensor.cadence);
+                virtualTrainer.SetPower((ushort)centralSensor.power);
+
+                currentSpeed = virtualTrainer.GetSpeed();
+                Debug.Log("Speed = " + currentSpeed * 3.6f + " km/h | Slope = " + slope);
+            }
+
             //get the cadence out of the sensor for pedaling speed
             if (centralSensor)
             {
-                pedalAdjustments.pedalingSpeed = centralSensor.cadence / 10;
+                pedalAdjustments.pedalingSpeed = centralSensor.cadence * 0.15f;
             }
             else
             {
-                pedalAdjustments.pedalingSpeed = 8;
+                pedalAdjustments.pedalingSpeed = 10;
             }
+
+           // transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime); This disable all Physics
 
             //Physics based Steering Control.
             fPhysicsWheel.transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y + customSteerAxis * steerAngle.Evaluate(rb.velocity.magnitude) + oscillationSteerEffect, 0);
@@ -223,8 +274,8 @@ namespace SBPScripts
             //Power Control. Wheel Torque + Acceleration curves
 
             //cache rb velocity
-            float currentSpeed = rb.velocity.magnitude;
-            
+            //float currentSpeed = rb.velocity.magnitude;
+
             if (!sprint)
                 currentTopSpeed = Mathf.Lerp(currentTopSpeed, topSpeed * relaxedSpeed, Time.deltaTime);
             else
@@ -234,9 +285,15 @@ namespace SBPScripts
                 rWheelRb.AddTorque(transform.right * torque * customAccelerationAxis);
 
             if (currentSpeed < currentTopSpeed && rawCustomAccelerationAxis > 0 && !isAirborne && !isBunnyHopping)
-                //rb.AddForce(transform.forward * accelerationCurve.Evaluate(customAccelerationAxis));
-                rb.AddForce(transform.forward * centralSensor.power);
-               
+                //   rb.AddRelativeForce(transform.forward * currentSpeed - rb.velocity); cassio sets this active
+                currentPosition = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+                rb.MovePosition(transform.position + (currentPosition * Time.fixedDeltaTime * currentSpeed));
+            //rb.velocity = (transform.forward * currentSpeed); // Andreas sets this active
+            //rb.AddForce(transform.forward * accelerationCurve.Evaluate(customAccelerationAxis));
+            //rb.AddForce(transform.forward * centralSensor.power);
+            //rb.AddForce(transform.forward * speed * 3.6f, ForceMode.VelocityChange);
+            // Debug.Log("Move with Force" + centralSensor.power);
+
 
             if (currentSpeed < reversingSpeed && rawCustomAccelerationAxis < 0 && !isAirborne && !isBunnyHopping)
                 rb.AddForce(-transform.forward * accelerationCurve.Evaluate(customAccelerationAxis) * 0.5f);
@@ -419,6 +476,21 @@ namespace SBPScripts
             }
             return groundZ;
 
+        }
+
+        private float CheckSlopeGrade()
+        {
+            slope = GameObject.FindWithTag("Player").GetComponent<BicycleController>().slope;
+           // Debug.Log("Slope is in %" + slope);
+            if (fitnessEquipmentDisplay)
+            {
+                fitnessEquipmentDisplay.SetTrainerSlope(Mathf.RoundToInt(slope));
+            }
+            float grade = Mathf.Tan(transform.localEulerAngles.x * Mathf.Deg2Rad);
+            float gradePercent = grade * 100f;
+            slope = gradePercent * (-1);
+            slope = Mathf.Clamp(slope, minValue, maxValue);
+            return slope;
         }
 
         //changed for not need to press a button for accerlation
