@@ -12,7 +12,6 @@ public class NetPlayerList : NetworkBehaviour
     public TMP_Text LobbyText;
 
     private Dictionary<ulong, bool> m_ClientsInLobby;
-    //private Dictionary<ulong, bool> m_ClientsInLobby;
 
     private string m_UserLobbyStatusText;
 
@@ -34,21 +33,11 @@ public class NetPlayerList : NetworkBehaviour
         }
         //Update our lobby
         GenerateUserStatsForLobby();
-
     }
-
-    /*public override void OnNetworkDespawn()
-    {
-        NetworkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
-        GenerateUserStatsForLobby();
-        UpdateAndCheckPlayersInLobby();
-    }
-    */
     private void OnGUI()
     {
         if (LobbyText != null) LobbyText.text = m_UserLobbyStatusText;
     }
-
     private void GenerateUserStatsForLobby()
     {
         m_UserLobbyStatusText = string.Empty;
@@ -58,15 +47,12 @@ public class NetPlayerList : NetworkBehaviour
 
         }
     }
-
     /// <summary>
     ///     UpdateAndCheckPlayersInLobby
     ///     Checks to see if we have at least 2 or more people to start
     /// </summary>
     private void UpdateAndCheckPlayersInLobby()
     {
-        //  m_AllPlayersInLobby = m_ClientsInLobby.Count >= m_MinimumPlayerCount;
-
         foreach (var clientLobbyStatus in m_ClientsInLobby)
         {
             SendClientReadyStatusUpdatesClientRpc(clientLobbyStatus.Key); // clientLobbyStatus.Value);
@@ -93,7 +79,8 @@ public class NetPlayerList : NetworkBehaviour
     {
         if (IsServer)
         {
-            if (!m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
+           // Wrong -->>  if (!m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
+            if (m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
             Debug.Log("Removed: " + clientId);
             m_UserLobbyStatusText = "";
             GenerateUserStatsForLobby();
@@ -115,8 +102,7 @@ public class NetPlayerList : NetworkBehaviour
         {
             if (!m_ClientsInLobby.ContainsKey(clientId))
                 m_ClientsInLobby.Add(clientId, false);
-                
-            GenerateUserStatsForLobby();
+                GenerateUserStatsForLobby();
         }
     }
 
