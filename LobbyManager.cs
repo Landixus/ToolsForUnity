@@ -10,7 +10,7 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
-using ParrelSync;  ///Needs to be Disabled when you build
+//using ParrelSync;  ///Needs to be Disabled when you build
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 
@@ -38,13 +38,13 @@ public class LobbyManager : MonoBehaviour {
         if (UnityServices.State == ServicesInitializationState.Uninitialized) {
             var options = new InitializationOptions();
         //Needs to be Disabled when you build
-         
+        /* 
             #if UNITY_EDITOR
                         //Used to differentiate clients when using ParrelSync
                         options.SetProfile(ClonesManager.IsClone() ? ClonesManager.GetArgument() : "Primary");
          #endif
-       
-            await UnityServices.InitializeAsync(options);
+       */
+        await UnityServices.InitializeAsync(options);
         }
         if (!AuthenticationService.Instance.IsSignedIn) {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
