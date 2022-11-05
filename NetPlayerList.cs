@@ -10,9 +10,7 @@ public class NetPlayerList : NetworkBehaviour
 
     [SerializeField]
     public TMP_Text LobbyText;
-
     private Dictionary<ulong, bool> m_ClientsInLobby;
-
     private string m_UserLobbyStatusText;
 
     public override void OnNetworkSpawn()
@@ -79,7 +77,6 @@ public class NetPlayerList : NetworkBehaviour
     {
         if (IsServer)
         {
-           // Wrong -->>  if (!m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
             if (m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
             Debug.Log("Removed: " + clientId);
             m_UserLobbyStatusText = "";
