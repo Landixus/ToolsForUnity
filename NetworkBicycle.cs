@@ -164,8 +164,9 @@ public class NetworkBicycle : NetworkBehaviour {
                  m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
             }*/
 
-            //    m_UserLobbyStatusText += nameTag.GetComponent<TextMeshPro>().text + "\n" + OwnerClientId.ToString() ;
-            m_UserLobbyStatusText += playerName.Value.ToString() + playerLobbyId.Value.ToString();
+           //    m_UserLobbyStatusText += nameTag.GetComponent<TextMeshPro>().text + "\n" + OwnerClientId.ToString() ;
+           //  m_UserLobbyStatusText += playerName.Value.ToString() + playerLobbyId.Value.ToString();
+            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n"
 
         }
     }
