@@ -14,14 +14,6 @@ public class NetworkBicycle : NetworkBehaviour {
 
     public GameObject nameTag;  // try to add to a list
     public GameObject wkg;
-
-    //Section PlayerList
-    [SerializeField]
-    public TMP_Text LobbyText;
-    private Dictionary<ulong, bool> m_ClientsInLobby;
-    private string m_UserLobbyStatusText;
-    // End Section
-
     //Network variables can not be nullable, so we have to use a fixed string
     private NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>();
     private NetworkVariable<FixedString128Bytes> playerLobbyId = new NetworkVariable<FixedString128Bytes>();
@@ -30,7 +22,7 @@ public class NetworkBicycle : NetworkBehaviour {
 
     private void Start()
     {
-        LobbyText = GameObject.FindGameObjectWithTag("PLStart").GetComponent<TMP_Text>();
+   //     LobbyText = GameObject.FindGameObjectWithTag("PLStart").GetComponent<TMP_Text>();
     }
 
     public override void OnNetworkSpawn()
@@ -40,44 +32,36 @@ public class NetworkBicycle : NetworkBehaviour {
         {
             SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
             SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
-      /*  if (IsLocalPlayer)
-        {
-            SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
-            SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
-        }*/
+           //   Debug.Log("We ve got listname" + _listname);
 
-        } else {
+            /*  if (IsLocalPlayer)
+              {
+                  SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
+                  SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
+              }*/
+
+        } else
+        {
             SetNameTag(playerName.Value.ToString());
             SetWattKG(playerWKG.Value.ToString());
-           
-
-
         }
-        m_ClientsInLobby = new Dictionary<ulong, bool>();
 
-        //Always add ourselves to the list at first
-        m_ClientsInLobby.Add(NetworkManager.LocalClientId, false);
+        NetPlayerList.instance.players.Add(this.OwnerClientId, this);
 
-        //If we are hosting, then handle the server side for detecting when clients have connected
-        //and when their lobby scenes are finished loading.
-        if (IsServer)
-        {
-            //Server will be notified when a client connects
-            NetworkManager.OnClientConnectedCallback += OnClientConnectedCallback;
-            NetworkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
-            UpdateAndCheckPlayersInLobby();
-        }
-        //Update our lobby
-        GenerateUserStatsForLobby();
+        playerName.OnValueChanged += OnPlayerNameChanged;
 
     }
 
     public override void OnNetworkDespawn()
     {
-      //  var playerId = LobbyManager.singleton.GetCurPlayerId();
-      //  NetPlayerList.Instance.players.Remove(playerId);
+
+        NetPlayerList.instance.players.Remove(this.OwnerClientId);
+
+        playerName.OnValueChanged -= OnPlayerNameChanged;
+        //  var playerId = LobbyManager.singleton.GetCurPlayerId();
+        //  NetPlayerList.Instance.players.Remove(playerId);
         // remove player from UI
-      //  Debug.Log("Removed: ");
+          Debug.Log("Removed: " + this.OwnerClientId);
     }
 
     [ServerRpc]
@@ -96,7 +80,7 @@ public class NetworkBicycle : NetworkBehaviour {
     private void OnPlayerNameChanged(FixedString32Bytes previousValue, FixedString32Bytes newValue)
     {
 
-        SetNameTag(playerName.Value.ToString());
+      SetNameTag(playerName.Value.ToString());
 
     }
 
@@ -119,6 +103,8 @@ public class NetworkBicycle : NetworkBehaviour {
         //Debug.Log("MoreValue" + playerWKG.Value.ToString());
     }
 
+
+
     private void Update()
     {   
         if (IsOwner)
@@ -129,11 +115,6 @@ public class NetworkBicycle : NetworkBehaviour {
             
         }
         SetWattKG(playerWKG.Value.ToString());
-
-        if (LobbyText == null)
-        {
-            LobbyText = GameObject.FindGameObjectWithTag("PLStart").GetComponent<TMP_Text>();
-        }
     }
 
 
@@ -146,91 +127,7 @@ public class NetworkBicycle : NetworkBehaviour {
 
 
 
-
-    //Section for PlayerList:
-    private void OnGUI()
-    {
-        if (LobbyText != null) LobbyText.text = m_UserLobbyStatusText;
-    }
-    private void GenerateUserStatsForLobby()
-    {
-        m_UserLobbyStatusText = string.Empty;
-
-        foreach (var clientLobbyStatus in m_ClientsInLobby)
-        {
-            /*
-            if (IsLocalPlayer)
-            {
-                 m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
-            }*/
-
-           //    m_UserLobbyStatusText += nameTag.GetComponent<TextMeshPro>().text + "\n" + OwnerClientId.ToString() ;
-           //  m_UserLobbyStatusText += playerName.Value.ToString() + playerLobbyId.Value.ToString();
-            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n"
-
-        }
-    }
-    /// <summary>
-    ///     UpdateAndCheckPlayersInLobby
-    ///     Checks to see if we have at least 2 or more people to start
-    /// </summary>
-    private void UpdateAndCheckPlayersInLobby()
-    {
-        foreach (var clientLobbyStatus in m_ClientsInLobby)
-        {
-            SendClientReadyStatusUpdatesClientRpc(clientLobbyStatus.Key); // clientLobbyStatus.Value);
-        }
-    }
-
-    /// <summary>
-    ///     OnClientConnectedCallback
-    ///     Since we are entering a lobby and Netcode's NetworkManager is spawning the player,
-    ///     the server can be configured to only listen for connected clients at this stage.
-    /// </summary>
-    private void OnClientConnectedCallback(ulong clientId)
-    {
-        if (IsServer)
-        {
-            if (!m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Add(clientId, false);
-
-            GenerateUserStatsForLobby();
-            UpdateAndCheckPlayersInLobby();
-        }
-    }
-
-    private void OnClientDisconnectCallback(ulong clientId)
-    {
-        if (IsServer)
-        {
-            if (m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Remove(clientId);
-            Debug.Log("Removed: " + clientId);
-            m_UserLobbyStatusText = "";
-            GenerateUserStatsForLobby();
-            UpdateAndCheckPlayersInLobby();
-        }
-    }
-
-    /// <summary>
-    ///     SendClientReadyStatusUpdatesClientRpc
-    ///     Sent from the server to the client when a player's status is updated.
-    ///     This also populates the connected clients' (excluding host) player state in the lobby
-    /// </summary>
-    /// <param name="clientId"></param>
-    [ClientRpc]
-    //  private void SendClientReadyStatusUpdatesClientRpc(ulong clientId, bool isReady)
-    private void SendClientReadyStatusUpdatesClientRpc(ulong clientId)
-    {
-        if (!IsServer)
-        {
-            if (!m_ClientsInLobby.ContainsKey(clientId))
-                m_ClientsInLobby.Add(clientId, false);
-            GenerateUserStatsForLobby();
-        }
-    }
-    //EndSection
-
-
-    private void OnDestroy() {
+       private void OnDestroy() {
         if (IsServer) {
             LobbyService.Instance.RemovePlayerAsync(LobbyManager.singleton.GetCurLobby().Id, playerLobbyId.Value.ToString());
         }
