@@ -17,25 +17,21 @@ public class NetPlayerList : NetworkBehaviour
 
     public Dictionary<ulong, NetworkBicycle> players;
 
-
+    
     private void Awake()
     {
-        // If there is an instance, and it's not me, delete myself.
-
-        if (instance != null && instance != this)
-        {
-            Destroy(this);
-        }
-        else
-        {
+        if (instance == null)
             instance = this;
-        }
+        else
+            Destroy(gameObject);
+        m_ClientsInLobby = new Dictionary<ulong, bool>();
+        players = new Dictionary<ulong, NetworkBicycle>();
     }
 
     public override void OnNetworkSpawn()
     {
-        m_ClientsInLobby = new Dictionary<ulong, bool>();
 
+       // m_ClientsInLobby = new Dictionary<ulong, bool>();
 
         //Always add ourselves to the list at first
         m_ClientsInLobby.Add(NetworkManager.LocalClientId, false);
@@ -63,15 +59,22 @@ public class NetPlayerList : NetworkBehaviour
         foreach (var clientLobbyStatus in m_ClientsInLobby)
         {
 
-            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n" + players.Values;
-            /*
-            if (IsLocalPlayer)
-            {
-                 m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
-            }*/
+            if (players.ContainsKey(clientLobbyStatus.Key))
+                Debug.Log("Key is " + clientLobbyStatus.Key + " Value is " + players[clientLobbyStatus.Key]);
 
-            //  m_UserLobbyStatusText += networkBicyle.nameTag.GetComponent<TextMeshPro>().text;
+            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {players[clientLobbyStatus.Key].playerName.Value}\n";
+            // m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n" + players[clientLobbyStatus.Key].playerName.Value;
+            //   m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {players[clientLobbyStatus.Key].playerName.Value}\n";
 
+        }
+
+        foreach (var entry in players)
+        {
+            Debug.Log(entry.Key);
+        }
+        foreach (var entry2 in m_ClientsInLobby)
+        {
+            Debug.Log(entry2.Key);
         }
     }
     /// <summary>
@@ -83,6 +86,7 @@ public class NetPlayerList : NetworkBehaviour
         foreach (var clientLobbyStatus in m_ClientsInLobby)
         {
             SendClientReadyStatusUpdatesClientRpc(clientLobbyStatus.Key); // clientLobbyStatus.Value);
+
         }
     }
 
