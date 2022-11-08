@@ -7,15 +7,35 @@ using UnityEngine.UI;
 
 public class NetPlayerList : NetworkBehaviour
 {
+    public static NetPlayerList instance { get; private set; }
 
     [SerializeField]
     public TMP_Text LobbyText;
+
     private Dictionary<ulong, bool> m_ClientsInLobby;
     private string m_UserLobbyStatusText;
+
+    public Dictionary<ulong, NetworkBicycle> players;
+
+
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+
+        if (instance != null && instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            instance = this;
+        }
+    }
 
     public override void OnNetworkSpawn()
     {
         m_ClientsInLobby = new Dictionary<ulong, bool>();
+
 
         //Always add ourselves to the list at first
         m_ClientsInLobby.Add(NetworkManager.LocalClientId, false);
@@ -39,9 +59,18 @@ public class NetPlayerList : NetworkBehaviour
     private void GenerateUserStatsForLobby()
     {
         m_UserLobbyStatusText = string.Empty;
+
         foreach (var clientLobbyStatus in m_ClientsInLobby)
         {
-            m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
+
+            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n" + players.Values;
+            /*
+            if (IsLocalPlayer)
+            {
+                 m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
+            }*/
+
+            //  m_UserLobbyStatusText += networkBicyle.nameTag.GetComponent<TextMeshPro>().text;
 
         }
     }
