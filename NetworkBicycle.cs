@@ -15,7 +15,7 @@ public class NetworkBicycle : NetworkBehaviour {
     public GameObject nameTag;  // try to add to a list
     public GameObject wkg;
     //Network variables can not be nullable, so we have to use a fixed string
-    private NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>();
+    public NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>();
     private NetworkVariable<FixedString128Bytes> playerLobbyId = new NetworkVariable<FixedString128Bytes>();
     private NetworkVariable<FixedString32Bytes> playerWKG = new NetworkVariable<FixedString32Bytes>();
 
@@ -28,38 +28,31 @@ public class NetworkBicycle : NetworkBehaviour {
     public override void OnNetworkSpawn()
     {
         playerName.OnValueChanged += OnPlayerNameChanged;
-        if (IsOwner)
-        {
+          if (IsOwner)
+         // if (IsServer)
+            {
             SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
             SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
            //   Debug.Log("We ve got listname" + _listname);
-
-            /*  if (IsLocalPlayer)
-              {
-                  SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
-                  SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
-              }*/
 
         } else
         {
             SetNameTag(playerName.Value.ToString());
             SetWattKG(playerWKG.Value.ToString());
         }
+        //  if(IsServer)
 
-        NetPlayerList.instance.players.Add(this.OwnerClientId, this);
-
-        playerName.OnValueChanged += OnPlayerNameChanged;
-
+       NetPlayerList.instance.players.Add(this.OwnerClientId, this);
     }
 
     public override void OnNetworkDespawn()
     {
 
-        NetPlayerList.instance.players.Remove(this.OwnerClientId);
+     //  NetPlayerList.instance.players.Remove(this.OwnerClientId);
 
         playerName.OnValueChanged -= OnPlayerNameChanged;
         //  var playerId = LobbyManager.singleton.GetCurPlayerId();
-        //  NetPlayerList.Instance.players.Remove(playerId);
+      //    NetPlayerList.instance.players.Remove(pl;
         // remove player from UI
           Debug.Log("Removed: " + this.OwnerClientId);
     }
@@ -75,6 +68,10 @@ public class NetworkBicycle : NetworkBehaviour {
     {
         playerLobbyId.Value = id;
     }
+
+   
+  
+    //SetPlayerLobbyNameServerRpc
 
 
     private void OnPlayerNameChanged(FixedString32Bytes previousValue, FixedString32Bytes newValue)
