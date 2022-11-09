@@ -17,7 +17,7 @@ public class NetPlayerList : NetworkBehaviour
 
     public Dictionary<ulong, NetworkBicycle> players;
 
-    
+
     private void Awake()
     {
         if (instance == null)
@@ -31,7 +31,7 @@ public class NetPlayerList : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
 
-       // m_ClientsInLobby = new Dictionary<ulong, bool>();
+        // m_ClientsInLobby = new Dictionary<ulong, bool>();
 
         //Always add ourselves to the list at first
         m_ClientsInLobby.Add(NetworkManager.LocalClientId, false);
@@ -58,23 +58,19 @@ public class NetPlayerList : NetworkBehaviour
 
         foreach (var clientLobbyStatus in m_ClientsInLobby)
         {
-
             if (players.ContainsKey(clientLobbyStatus.Key))
-                Debug.Log("Key is " + clientLobbyStatus.Key + " Value is " + players[clientLobbyStatus.Key]);
+            {
+                Debug.Log("Key is " + clientLobbyStatus.Key + " Value is " + players[clientLobbyStatus.Key].playerName.Value);
+                m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {players[clientLobbyStatus.Key].playerName.Value}\n";
+            }
+            /*
+            if (IsLocalPlayer)
+            {
+                 m_UserLobbyStatusText += PlayerPrefs.GetString("BikerName") + "\n";
+            }*/
 
-            m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {players[clientLobbyStatus.Key].playerName.Value}\n";
-            // m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {clientLobbyStatus.Value}\n" + players[clientLobbyStatus.Key].playerName.Value;
-            //   m_UserLobbyStatusText += $"{clientLobbyStatus.Key}: {players[clientLobbyStatus.Key].playerName.Value}\n";
+            //  m_UserLobbyStatusText += networkBicyle.nameTag.GetComponent<TextMeshPro>().text;
 
-        }
-
-        foreach (var entry in players)
-        {
-            Debug.Log(entry.Key);
-        }
-        foreach (var entry2 in m_ClientsInLobby)
-        {
-            Debug.Log(entry2.Key);
         }
     }
     /// <summary>
@@ -99,8 +95,11 @@ public class NetPlayerList : NetworkBehaviour
     {
         if (IsServer)
         {
-            if (!m_ClientsInLobby.ContainsKey(clientId)) m_ClientsInLobby.Add(clientId, false);
-
+            if (!m_ClientsInLobby.ContainsKey(clientId))
+            {
+                Debug.Log("Client added to lobby on Server " + clientId.ToString());
+                m_ClientsInLobby.Add(clientId, false);
+            }
             GenerateUserStatsForLobby();
             UpdateAndCheckPlayersInLobby();
         }
@@ -125,15 +124,17 @@ public class NetPlayerList : NetworkBehaviour
     /// </summary>
     /// <param name="clientId"></param>
     [ClientRpc]
-  //  private void SendClientReadyStatusUpdatesClientRpc(ulong clientId, bool isReady)
+    //  private void SendClientReadyStatusUpdatesClientRpc(ulong clientId, bool isReady)
     private void SendClientReadyStatusUpdatesClientRpc(ulong clientId)
     {
         if (!IsServer)
         {
             if (!m_ClientsInLobby.ContainsKey(clientId))
+            {
+                Debug.Log("Client added to lobby on client " + clientId.ToString());
                 m_ClientsInLobby.Add(clientId, false);
-                GenerateUserStatsForLobby();
+            }
+            GenerateUserStatsForLobby();
         }
     }
-
 }
