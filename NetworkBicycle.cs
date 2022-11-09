@@ -30,7 +30,9 @@ public class NetworkBicycle : NetworkBehaviour {
         playerName.OnValueChanged += OnPlayerNameChanged;
           if (IsOwner)
          // if (IsServer)
-            {
+        {
+           // Debug.Log("Name on owner is " +PlayerPrefs.GetString("BikerName", "Unnamed Player"));
+          //  playerName.Value = (PlayerPrefs.GetString("BikerName", "Unnamed Player"));
             SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
             SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
            //   Debug.Log("We ve got listname" + _listname);
@@ -40,9 +42,8 @@ public class NetworkBicycle : NetworkBehaviour {
             SetNameTag(playerName.Value.ToString());
             SetWattKG(playerWKG.Value.ToString());
         }
-        //  if(IsServer)
-
-       NetPlayerList.instance.players.Add(this.OwnerClientId, this);
+        Debug.Log("Spawned Bicycle and added " + this.OwnerClientId + " Key, and " + playerName.Value + " as value");
+        NetPlayerList.instance.players.Add(this.OwnerClientId, this);
     }
 
     public override void OnNetworkDespawn()
@@ -57,11 +58,14 @@ public class NetworkBicycle : NetworkBehaviour {
           Debug.Log("Removed: " + this.OwnerClientId);
     }
 
+    
     [ServerRpc]
     public void SetPlayerNameServerRpc(string name)
     {
+        Debug.Log(playerName.Value + " changed to " + name);
         playerName.Value = name;
     }
+
 
     [ServerRpc]
     public void SetPlayerLobbyIdServerRpc(string id)
@@ -77,10 +81,23 @@ public class NetworkBicycle : NetworkBehaviour {
     private void OnPlayerNameChanged(FixedString32Bytes previousValue, FixedString32Bytes newValue)
     {
 
-      SetNameTag(playerName.Value.ToString());
+        SetNameTag(newValue.ToString());
+       // SetNameTag(playerName.Value.ToString());
 
     }
 
+    private void SetNameTag(string name)
+    {
+        if (nameTag == null)
+        {
+            Debug.Log("nametag was null");
+            return;
+        }
+        nameTag.GetComponent<TextMeshPro>().text = name;
+        Debug.Log("Nametag changed to " + name);
+
+    }
+    /*
     private void SetNameTag(string name)
     {
         if (nameTag == null) {
@@ -88,7 +105,7 @@ public class NetworkBicycle : NetworkBehaviour {
         }
         nameTag.GetComponent<TextMeshPro>().text = name;
         
-    }
+    }*/
 
     public void SetWattKG(string _wkg)
     {
