@@ -14,6 +14,11 @@ public class NetworkBicycle : NetworkBehaviour {
 
     public GameObject nameTag;  // try to add to a list
     public GameObject wkg;
+
+    public int sprintId;
+    public SprintKomManager sprintKomManager;
+    private Sprint sprint;
+
     //Network variables can not be nullable, so we have to use a fixed string
     public NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>();
     private NetworkVariable<FixedString128Bytes> playerLobbyId = new NetworkVariable<FixedString128Bytes>();
@@ -22,7 +27,7 @@ public class NetworkBicycle : NetworkBehaviour {
 
     private void Start()
     {
-   //     LobbyText = GameObject.FindGameObjectWithTag("PLStart").GetComponent<TMP_Text>();
+       
     }
 
     public override void OnNetworkSpawn()
@@ -31,25 +36,26 @@ public class NetworkBicycle : NetworkBehaviour {
           if (IsOwner)
          // if (IsServer)
         {
-           // Debug.Log("Name on owner is " +PlayerPrefs.GetString("BikerName", "Unnamed Player"));
-          //  playerName.Value = (PlayerPrefs.GetString("BikerName", "Unnamed Player"));
+
             SetPlayerNameServerRpc(PlayerPrefs.GetString("BikerName", "Unnamed Player"));
             SetPlayerLobbyIdServerRpc(LobbyManager.singleton.GetCurPlayerId());
-           //   Debug.Log("We ve got listname" + _listname);
+
 
         } else
         {
             SetNameTag(playerName.Value.ToString());
             SetWattKG(playerWKG.Value.ToString());
         }
-        Debug.Log("Spawned Bicycle and added " + this.OwnerClientId + " Key, and " + playerName.Value + " as value");
-        NetPlayerList.instance.players.Add(this.OwnerClientId, this);
+      //  Debug.Log("Spawned Bicycle and added " + this.OwnerClientId + " Key, and " + playerName.Value + " as value");
+      //  NetPlayerList.instance.players.Add(this.OwnerClientId, this);
+      //  PlayerListManager.instance.AddPlayerToList();
+        Debug.Log("Added to List called");
     }
 
     public override void OnNetworkDespawn()
     {
-
-     //  NetPlayerList.instance.players.Remove(this.OwnerClientId);
+        sprint = sprintKomManager.getSprintFromId(sprintId);
+        sprintKomManager.RemoveSprint(sprint);
 
         playerName.OnValueChanged -= OnPlayerNameChanged;
         //  var playerId = LobbyManager.singleton.GetCurPlayerId();
@@ -142,7 +148,7 @@ public class NetworkBicycle : NetworkBehaviour {
 
 
        private void OnDestroy() {
-        if (IsServer) {
+        if (IsHost) {
             LobbyService.Instance.RemovePlayerAsync(LobbyManager.singleton.GetCurLobby().Id, playerLobbyId.Value.ToString());
         }
         if (IsOwner) {
