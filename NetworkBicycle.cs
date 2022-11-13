@@ -54,8 +54,11 @@ public class NetworkBicycle : NetworkBehaviour {
 
     public override void OnNetworkDespawn()
     {
-        sprint = sprintKomManager.getSprintFromId(sprintId);
-        sprintKomManager.RemoveSprint(sprint);
+        if (IsOwner)
+        {
+            sprint = sprintKomManager.getSprintFromId(sprintId);
+            sprintKomManager.RemoveSprint(sprint);
+        }
 
         playerName.OnValueChanged -= OnPlayerNameChanged;
         //  var playerId = LobbyManager.singleton.GetCurPlayerId();
