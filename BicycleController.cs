@@ -196,7 +196,7 @@ namespace SBPScripts {
         private float posShifter;
         //Mutliplier for the posshifter, determines how far away from the spline the bicycle can go
 
-        public float windSpeed = 13f;
+        public float windSpeed = 0.0001f;
 
         //Static so that is is shared between all bikes
         public static float posShiftMultiplier = 3;
@@ -538,10 +538,10 @@ namespace SBPScripts {
             // Need to be tested
             float sloper = PlayerPrefs.GetInt("Sloper");
             float slope = smoothenedSlope /sloper; // / slopeDivider;
-     
+            
             if (Time.time > nextActionTime) {
                 nextActionTime += period;
-
+                playerPower = centralSensor.power;
 
                 if (!is_ai) {
                     if (!DebugMODE) {
