@@ -33,3 +33,39 @@ if MS==0 {
 1,1-0:16.7.0*255(@1,Verbrauch aktuell,W,current,17
 1,1-0:2.8.0*255(@1,Gesamt Verschenkt,KWh,total,4
 #
+>S
+if MS==1 {
+if Pa>Ph { 
+ t=T
+}
+
+if upsecs%10==0 {
+if t==0
+and StD==0
+and a==0 {
+  StD=1 
+  a=1 
+}
+
+;AUSSCHALTEN
+if Pa>Pt
+and StD==1
+and a==0 {
+ StD=0
+ a=1
+}
+
+}
+
+} else { 
+ StD=0
+ if chg[MS]>0 { 
+  a=1 
+ } 
+}
+if a==1
+or upsecs%300==0 {
+ =>websend[%ip%] power %StD%
+} 
+
+a=0
