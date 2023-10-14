@@ -1,0 +1,33 @@
+>D
+pcurr=0
+;IP der S20 Steckdose
+url="[192.168.0.145]"
+
+>T
+pcurr=Haus#current
+>S
+if upsecs%tper==0
+then
+if pcurr<-200
+then
+=>WebSend %url% POWER1 ON
+endif
+if pcurr>25
+then
+=>WebSend %url% POWER1 OFF
+endif
+>B
+=>sensor53 r
+>M 2
++1,3,o,0,9600,Haus
++2,1,o,0,9600
+
+1,1-0:1.8.0*255(@1,Gesamtverbrauch,KWh,total,4
+1,1-0:1.8.0*96(@1,Verbrauch 1 Tag,KWh,total_1dn,4
+1,1-0:1.8.0*97(@1,Verbrauch 7 Tage,KWh,total_7d,4
+1,1-0:1.8.0*98(@1,Verbrauch 30 Tage,KWh,total_30d,4
+1,1-0:1.8.0*99(@1,Verbrauch 1 Jahr,KWh,total_365d,4
+1,1-0:16.7.0*255(@1,Verbrauch aktuell,W,current,17
+1,1-0:2.8.0*255(@1,Gesamt Verschenkt,KWh,total,4
+print %Pa%
+#
