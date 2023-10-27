@@ -1,0 +1,70 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Video;
+using UnityEngine.UI;
+using TMPro;
+
+public class VideoSpeed : MonoBehaviour
+{
+    // 1 = 20Km/h, 2 = 40Km/h, 
+    [SerializeField] private VideoPlayer videoPlayer;
+
+    public float videoSpeed = 1f;
+    public float maxVideoSpeed = 10f;
+    public float minVideoSpeed = 0f;
+    public FitnessEquipmentDisplay fec;
+    public float fecSpeed;
+
+    public string pathTotheVideo;
+    public TMP_InputField inputField;
+    public Button okButton;
+    public KeyCode toggleKey = KeyCode.V;
+    public KeyCode videoRotate = KeyCode.R;
+    public RectTransform videoPlane;
+
+    private void Start()
+    {
+        videoPlayer.isLooping = true;
+        //videoPlayer.url = pathTotheVideo;
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Input.GetKeyDown(toggleKey))
+        {
+            ToggleInputField();
+        }
+        fecSpeed = fec.GetComponent<FitnessEquipmentDisplay>().speed;
+        videoPlayer.playbackSpeed = fecSpeed / 20f;
+
+        if (Input.GetKeyDown(videoRotate))
+        {
+
+            if (videoPlane != null)
+            {
+                // Rotiere das RectTransform-Objekt um 180 Grad um die Z-Achse (Uhrzeigersinn).
+                videoPlane.Rotate(Vector3.forward, 180f);
+            }
+        }
+    }
+
+    private void ToggleInputField()
+    {
+        inputField.gameObject.SetActive(!inputField.gameObject.activeSelf);
+        okButton.gameObject.SetActive(!okButton.gameObject.activeSelf);
+    }
+
+    public void ChangeVideoURL()
+    {
+        string newVideoURL = inputField.text;
+        if (!string.IsNullOrEmpty(newVideoURL))
+        {
+            videoPlayer.Stop();
+            videoPlayer.url = newVideoURL;
+            videoPlayer.Play();
+        }
+    }
+}
